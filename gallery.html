@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Our Cozy Gallery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Quicksand', sans-serif;
+      background: linear-gradient(to bottom right, #ffe6f0, #e0f7fa);
+      color: #444;
+      overflow-x: hidden;
+    }
+
+    header {
+      font-family: 'Pacifico', cursive;
+      font-size: 2.5rem;
+      text-align: center;
+      padding: 1rem;
+      background-color: #ffd9ec;
+      color: #b04e73;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    .music-toggle {
+      position: absolute;
+      top: 1.2rem;
+      right: 1.5rem;
+      background: #ffe6fa;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-family: 'Quicksand', sans-serif;
+      box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .upload-box {
+      background: #fffafc;
+      padding: 1.5rem;
+      border-radius: 20px;
+      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    input[type="file"] {
+      padding: 1rem;
+      border: none;
+      background: #ffdff0;
+      border-radius: 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .item {
+      background: #fff;
+      border-radius: 15px;
+      padding: 0.5rem;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .item img, .item video {
+      width: 100%;
+      max-height: 300px;
+      border-radius: 12px;
+    }
+
+    /* Star animations */
+    .stars {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .star {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #fff8dc;
+      border-radius: 50%;
+      animation: floatStar 10s linear infinite;
+      opacity: 0.8;
+    }
+
+    @keyframes floatStar {
+      0% {
+        transform: translateY(100vh) scale(0.5);
+        opacity: 0;
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-10vh) scale(1.2);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    Our Cozy Gallery
+    <button class="music-toggle" onclick="toggleMusic()">??</button>
+  </header>
+
+  <div class="stars" id="stars"></div>
+
+  <div class="container">
+    <div class="upload-box">
+      <h2>Upload Your Cute Moments ??</h2>
+      <input type="file" id="uploadInput" accept="image/*,video/*" multiple />
+    </div>
+
+    <div class="gallery" id="gallery"></div>
+  </div>
+
+  <audio id="bgMusic" loop>
+    <source src="https://cdn.pixabay.com/audio/2023/04/10/audio_b6ef2756b3.mp3" type="audio/mpeg" />
+    Your browser does not support the audio element.
+  </audio>
+
+  <script>
+    const uploadInput = document.getElementById("uploadInput");
+    const gallery = document.getElementById("gallery");
+    const bgMusic = document.getElementById("bgMusic");
+    const starsContainer = document.getElementById("stars");
+
+    // Toggle Music
+    function toggleMusic() {
+      if (bgMusic.paused) {
+        bgMusic.play();
+      } else {
+        bgMusic.pause();
+      }
+    }
+
+    // Load from localStorage
+    function loadGallery() {
+      const stored = JSON.parse(localStorage.getItem("cozyGallery")) || [];
+      stored.forEach(item => {
+        addToGallery(item.data, item.type);
+      });
+    }
+
+    // Save and add
+    uploadInput.addEventListener("change", (event) => {
+      const files = event.target.files;
+
+      Array.from(files).forEach(file => {
+        const fileReader = new FileReader();
+        fileReader.onload = function(e) {
+          const dataUrl = e.target.result;
+          addToGallery(dataUrl, file.type);
+
+          const saved = JSON.parse(localStorage.getItem("cozyGallery")) || [];
+          saved.push({ data: dataUrl, type: file.type });
+          localStorage.setItem("cozyGallery", JSON.stringify(saved));
+        };
+        fileReader.readAsDataURL(file);
+      });
+    });
+
+    function addToGallery(dataUrl, type) {
+      const div = document.createElement("div");
+      div.className = "item";
+
+      if (type.startsWith("image")) {
+        const img = document.createElement("img");
+        img.src = dataUrl;
+        div.appendChild(img);
+      } else if (type.startsWith("video")) {
+        const video = document.createElement("video");
+        video.src = dataUrl;
+        video.controls = true;
+        div.appendChild(video);
+      }
+
+      gallery.appendChild(div);
+    }
+
+    // Create stars
+    function createStars(count) {
+      for (let i = 0; i < count; i++) {
+        const star = document.createElement("div");
+        star.className = "star";
+        star.style.left = Math.random() * 100 + "vw";
+        star.style.top = Math.random() * 100 + "vh";
+        star.style.animationDuration = 5 + Math.random() * 5 + "s";
+        star.style.width = star.style.height = (5 + Math.random() * 10) + "px";
+        starsContainer.appendChild(star);
+      }
+    }
+
+    loadGallery();
+    createStars(50);
+  </script>
+</body>
+</html>
